@@ -1,13 +1,13 @@
 /**
  * 𝐈𝐍𝐅𝐈𝐍𝐈𝐗•𝐌𝐃 - A WhatsApp Bot
- * Copyright (c) 2024 rebelle masque
+ * Copyright (c) 2026 rebelle masque
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the MIT License.
  * 
  * Credits:
  * - Baileys Library by @adiwajshing
- * - Pair Code implementation inspired by TechGod143 & DGXEON
+ * - Pair Code implementation inspired by rebelle masque 
  */
 require('./settings')
 const { Boom } = require('@hapi/boom')
@@ -90,13 +90,13 @@ const question = (text) => {
 }
 
 
-async function startXeonBotInc() {
+async function startInfinixBot() {
     try {
         let { version, isLatest } = await fetchLatestBaileysVersion()
-        const { state, saveCreds } = await useMultiFileAuthState(`./session`)
+        const { state, saveCreds } = await useMultiFileAuthState(process.env.SESSION_DIR || `./session`)
         const msgRetryCounterCache = new NodeCache()
 
-        const XeonBotInc = makeWASocket({
+        const InfinixMD = makeWASocket({
             version,
             logger: pino({ level: 'silent' }),
             printQRInTerminal: !pairingCode,
@@ -120,41 +120,41 @@ async function startXeonBotInc() {
         })
 
         // Save credentials when they update
-        XeonBotInc.ev.on('creds.update', saveCreds)
+        InfinixMD.ev.on('creds.update', saveCreds)
 
-    store.bind(XeonBotInc.ev)
+    store.bind(InfinixMD.ev)
 
     // Message handling
-    XeonBotInc.ev.on('messages.upsert', async chatUpdate => {
+    InfinixMD.ev.on('messages.upsert', async chatUpdate => {
         try {
             const mek = chatUpdate.messages[0]
             if (!mek.message) return
             mek.message = (Object.keys(mek.message)[0] === 'ephemeralMessage') ? mek.message.ephemeralMessage.message : mek.message
             if (mek.key && mek.key.remoteJid === 'status@broadcast') {
-                await handleStatus(XeonBotInc, chatUpdate);
+                await handleStatus(InfinixMD, chatUpdate);
                 return;
             }
             // In private mode, only block non-group messages (allow groups for moderation)
-            // Note: XeonBotInc.public is not synced, so we check mode in main.js instead
+            // Note: InfinixMD.public is not synced, so we check mode in main.js instead
             // This check is kept for backward compatibility but mainly blocks DMs
-            if (!XeonBotInc.public && !mek.key.fromMe && chatUpdate.type === 'notify') {
+            if (!InfinixMD.public && !mek.key.fromMe && chatUpdate.type === 'notify') {
                 const isGroup = mek.key?.remoteJid?.endsWith('@g.us')
                 if (!isGroup) return // Block DMs in private mode, but allow group messages
             }
             if (mek.key.id.startsWith('BAE5') && mek.key.id.length === 16) return
 
             // Clear message retry cache to prevent memory bloat
-            if (XeonBotInc?.msgRetryCounterCache) {
-                XeonBotInc.msgRetryCounterCache.clear()
+            if (InfinixMD?.msgRetryCounterCache) {
+                InfinixMD.msgRetryCounterCache.clear()
             }
 
             try {
-                await handleMessages(XeonBotInc, chatUpdate, true)
+                await handleMessages(InfinixMD, chatUpdate, true)
             } catch (err) {
                 console.error("Error in handleMessages:", err)
                 // Only try to send error message if we have a valid chatId
                 if (mek.key && mek.key.remoteJid) {
-                    await XeonBotInc.sendMessage(mek.key.remoteJid, {
+                    await InfinixMD.sendMessage(mek.key.remoteJid, {
                         text: '❌ An error occurred while processing your message.',
                         contextInfo: {
                             forwardingScore: 1,
@@ -174,7 +174,7 @@ async function startXeonBotInc() {
     })
 
     // Add these event handlers for better functionality
-    XeonBotInc.decodeJid = (jid) => {
+    InfinixMD.decodeJid = (jid) => {
         if (!jid) return jid
         if (/:\d+@/gi.test(jid)) {
             let decode = jidDecode(jid) || {}
@@ -182,37 +182,37 @@ async function startXeonBotInc() {
         } else return jid
     }
 
-    XeonBotInc.ev.on('contacts.update', update => {
+    InfinixMD.ev.on('contacts.update', update => {
         for (let contact of update) {
-            let id = XeonBotInc.decodeJid(contact.id)
+            let id = InfinixMD.decodeJid(contact.id)
             if (store && store.contacts) store.contacts[id] = { id, name: contact.notify }
         }
     })
 
-    XeonBotInc.getName = (jid, withoutContact = false) => {
-        id = XeonBotInc.decodeJid(jid)
-        withoutContact = XeonBotInc.withoutContact || withoutContact
+    InfinixMD.getName = (jid, withoutContact = false) => {
+        id = InfinixMD.decodeJid(jid)
+        withoutContact = InfinixMD.withoutContact || withoutContact
         let v
         if (id.endsWith("@g.us")) return new Promise(async (resolve) => {
             v = store.contacts[id] || {}
-            if (!(v.name || v.subject)) v = XeonBotInc.groupMetadata(id) || {}
+            if (!(v.name || v.subject)) v = InfinixMD.groupMetadata(id) || {}
             resolve(v.name || v.subject || PhoneNumber('+' + id.replace('@s.whatsapp.net', '')).getNumber('international'))
         })
         else v = id === '0@s.whatsapp.net' ? {
             id,
             name: 'WhatsApp'
-        } : id === XeonBotInc.decodeJid(XeonBotInc.user.id) ?
-            XeonBotInc.user :
+        } : id === InfinixMD.decodeJid(InfinixMD.user.id) ?
+            InfinixMD.user :
             (store.contacts[id] || {})
         return (withoutContact ? '' : v.name) || v.subject || v.verifiedName || PhoneNumber('+' + jid.replace('@s.whatsapp.net', '')).getNumber('international')
     }
 
-    XeonBotInc.public = true
+    InfinixMD.public = true
 
-    XeonBotInc.serializeM = (m) => smsg(XeonBotInc, m, store)
+    InfinixMD.serializeM = (m) => smsg(InfinixMD, m, store)
 
     // Handle pairing code
-    if (pairingCode && !XeonBotInc.authState.creds.registered) {
+    if (pairingCode && !InfinixMD.authState.creds.registered) {
         if (useMobile) throw new Error('Cannot use pairing code with mobile api')
 
         let phoneNumber
@@ -234,7 +234,7 @@ async function startXeonBotInc() {
 
         setTimeout(async () => {
             try {
-                let code = await XeonBotInc.requestPairingCode(phoneNumber)
+                let code = await InfinixMD.requestPairingCode(phoneNumber)
                 code = code?.match(/.{1,4}/g)?.join("-") || code
                 console.log(chalk.black(chalk.bgGreen(`Your Pairing Code : `)), chalk.black(chalk.white(code)))
                 console.log(chalk.yellow(`\nPlease enter this code in your WhatsApp app:\n1. Open WhatsApp\n2. Go to Settings > Linked Devices\n3. Tap "Link a Device"\n4. Enter the code shown above`))
@@ -246,7 +246,7 @@ async function startXeonBotInc() {
     }
 
     // Connection handling
-    XeonBotInc.ev.on('connection.update', async (s) => {
+    InfinixMD.ev.on('connection.update', async (s) => {
         const { connection, lastDisconnect, qr } = s
         
         if (qr) {
@@ -259,11 +259,11 @@ async function startXeonBotInc() {
         
         if (connection == "open") {
             console.log(chalk.magenta(` `))
-            console.log(chalk.yellow(`🌿Connected to => ` + JSON.stringify(XeonBotInc.user, null, 2)))
+            console.log(chalk.yellow(`🌿Connected to => ` + JSON.stringify(InfinixMD.user, null, 2)))
 
             try {
-                const botNumber = XeonBotInc.user.id.split(':')[0] + '@s.whatsapp.net';
-                await XeonBotInc.sendMessage(botNumber, {
+                const botNumber = InfinixMD.user.id.split(':')[0] + '@s.whatsapp.net';
+                await InfinixMD.sendMessage(botNumber, {
                     text: `🤖 Bot Connected Successfully!\n\n⏰ Time: ${new Date().toLocaleString()}\n✅ Status: Online and Ready!\n\n✅Make sure to join below channel`,
                     contextInfo: {
                         forwardingScore: 1,
@@ -309,7 +309,7 @@ async function startXeonBotInc() {
             if (shouldReconnect) {
                 console.log(chalk.yellow('Reconnecting...'))
                 await delay(5000)
-                startXeonBotInc()
+                startInfinixBot()
             }
         }
     })
@@ -318,7 +318,7 @@ async function startXeonBotInc() {
     const antiCallNotified = new Set();
 
     // Anticall handler: block callers when enabled
-    XeonBotInc.ev.on('call', async (calls) => {
+    InfinixMD.ev.on('call', async (calls) => {
         try {
             const { readState: readAnticallState } = require('./commands/anticall');
             const state = readAnticallState();
@@ -329,10 +329,10 @@ async function startXeonBotInc() {
                 try {
                     // First: attempt to reject the call if supported
                     try {
-                        if (typeof XeonBotInc.rejectCall === 'function' && call.id) {
-                            await XeonBotInc.rejectCall(call.id, callerJid);
-                        } else if (typeof XeonBotInc.sendCallOfferAck === 'function' && call.id) {
-                            await XeonBotInc.sendCallOfferAck(call.id, callerJid, 'reject');
+                        if (typeof InfinixMD.rejectCall === 'function' && call.id) {
+                            await InfinixMD.rejectCall(call.id, callerJid);
+                        } else if (typeof InfinixMD.sendCallOfferAck === 'function' && call.id) {
+                            await InfinixMD.sendCallOfferAck(call.id, callerJid, 'reject');
                         }
                     } catch {}
 
@@ -340,12 +340,12 @@ async function startXeonBotInc() {
                     if (!antiCallNotified.has(callerJid)) {
                         antiCallNotified.add(callerJid);
                         setTimeout(() => antiCallNotified.delete(callerJid), 60000);
-                        await XeonBotInc.sendMessage(callerJid, { text: '📵 Anticall is enabled. Your call was rejected and you will be blocked.' });
+                        await InfinixMD.sendMessage(callerJid, { text: '📵 Anticall is enabled. Your call was rejected and you will be blocked.' });
                     }
                 } catch {}
                 // Then: block after a short delay to ensure rejection and message are processed
                 setTimeout(async () => {
-                    try { await XeonBotInc.updateBlockStatus(callerJid, 'block'); } catch {}
+                    try { await InfinixMD.updateBlockStatus(callerJid, 'block'); } catch {}
                 }, 800);
             }
         } catch (e) {
@@ -353,35 +353,35 @@ async function startXeonBotInc() {
         }
     });
 
-    XeonBotInc.ev.on('group-participants.update', async (update) => {
-        await handleGroupParticipantUpdate(XeonBotInc, update);
+    InfinixMD.ev.on('group-participants.update', async (update) => {
+        await handleGroupParticipantUpdate(InfinixMD, update);
     });
 
-    XeonBotInc.ev.on('messages.upsert', async (m) => {
+    InfinixMD.ev.on('messages.upsert', async (m) => {
         if (m.messages[0].key && m.messages[0].key.remoteJid === 'status@broadcast') {
-            await handleStatus(XeonBotInc, m);
+            await handleStatus(InfinixMD, m);
         }
     });
 
-    XeonBotInc.ev.on('status.update', async (status) => {
-        await handleStatus(XeonBotInc, status);
+    InfinixMD.ev.on('status.update', async (status) => {
+        await handleStatus(InfinixMD, status);
     });
 
-    XeonBotInc.ev.on('messages.reaction', async (status) => {
-        await handleStatus(XeonBotInc, status);
+    InfinixMD.ev.on('messages.reaction', async (status) => {
+        await handleStatus(InfinixMD, status);
     });
 
-    return XeonBotInc
+    return InfinixMD
     } catch (error) {
-        console.error('Error in startXeonBotInc:', error)
+        console.error('Error in startInfinixBot:', error)
         await delay(5000)
-        startXeonBotInc()
+        startInfinixBot()
     }
 }
 
 
 // Start the bot with error handling
-startXeonBotInc().catch(error => {
+startInfinixBot().catch(error => {
     console.error('Fatal error:', error)
     process.exit(1)
 })

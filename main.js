@@ -41,6 +41,11 @@ const { autoreadCommand, isAutoreadEnabled, handleAutoread } = require('./comman
 
 // Command imports
 const tagAllCommand = require('./commands/tagall');
+
+const apkCommand = require('./commands/apk');
+const apkdlCommand = require('./commands/apkdl');
+const antiMentionCommand = require('./commands/antimention');
+const setPrefixCommand = require('./commands/setprefix');
 const helpCommand = require('./commands/help');
 const banCommand = require('./commands/ban');
 const { promoteCommand } = require('./commands/promote');
@@ -445,6 +450,34 @@ async function handleMessages(sock, messageUpdate, printLog) {
         const chatId = message.key.remoteJid;
         const senderId = message.key.participant || message.key.remoteJid;
         const isGroup = chatId.endsWith('@g.us');
+
+        // ANTI-MENTION (auto delete) - suppression des mentions de masse
+        try {
+            const { getAntimention } = require('./lib/index');
+            const enabled = !!getAntimention(chatId, 'on');
+            if (enabled && isGroup) {
+                const ctx = message.message?.extendedTextMessage?.contextInfo;
+                const mentioned = ctx?.mentionedJid || [];
+                const threshold = settings.antiMention?.threshold ?? 5;
+                if (Array.isArray(mentioned) && mentioned.length >= threshold) {
+                    const adminBypass = settings.antiMention?.adminBypass ?? true;
+                    let senderIsAdmin = false;
+                    if (adminBypass) {
+                        const adminStatus = await isAdmin(sock, chatId, senderId);
+                        senderIsAdmin = adminStatus.isSenderAdmin;
+                    }
+                    if (!senderIsAdmin) {
+                        await sock.sendMessage(chatId, { delete: message.key });
+                        // Optionnel: avertir
+                        // await sock.sendMessage(chatId, { text: '🚫 Mention de masse interdite.' }, { quoted: message });
+                        return;
+                    }
+                }
+            }
+        } catch (e) {
+            // ignore
+        }
+
         const senderIsSudo = await isSudo(senderId);
         const senderIsOwnerOrSudo = await isOwnerOrSudo(senderId, sock, chatId);
 
@@ -470,24 +503,33 @@ async function handleMessages(sock, messageUpdate, printLog) {
             }
         }
 
-        const userMessage = (
-            message.message?.conversation?.trim() ||
-            message.message?.extendedTextMessage?.text?.trim() ||
-            message.message?.imageMessage?.caption?.trim() ||
-            message.message?.videoMessage?.caption?.trim() ||
-            message.message?.buttonsResponseMessage?.selectedButtonId?.trim() ||
-            ''
-        ).toLowerCase().replace(/\.\s+/g, '.').trim();
+        // Preserve raw message for commands and prefix detection
+const rawText = (
+    message.message?.conversation?.trim() ||
+    message.message?.extendedTextMessage?.text?.trim() ||
+    message.message?.imageMessage?.caption?.trim() ||
+    message.message?.videoMessage?.caption?.trim() ||
+    message.message?.buttonsResponseMessage?.selectedButtonId?.trim() ||
+    ''
+).trim();
 
-        // Preserve raw message for commands like .tag that need original casing
-        const rawText = message.message?.conversation?.trim() ||
-            message.message?.extendedTextMessage?.text?.trim() ||
-            message.message?.imageMessage?.caption?.trim() ||
-            message.message?.videoMessage?.caption?.trim() ||
-            '';
+// ✅ Dynamic prefix support (emoji/flags/etc.) without breaking existing command router:
+// We normalize any configured prefix to '.' internally, so the rest of the code keeps working.
+const configuredPrefix = settings?.prefix || '.';
+const prefixList = Array.isArray(configuredPrefix) ? configuredPrefix : [configuredPrefix];
 
-        // Only log command usage
-        if (userMessage.startsWith('.')) {
+// Find which prefix the user used
+const usedPrefix = prefixList.find(p => p && rawText.startsWith(p));
+
+// If user used a configured prefix, normalize it to '.' for internal processing
+const normalizedText = usedPrefix ? ('.' + rawText.slice(usedPrefix.length)) : rawText;
+
+const userMessage = normalizedText
+    .toLowerCase()
+    .replace(/\.\s+/g, '.')
+    .trim();
+// Only log command usage
+        if (usedPrefix && userMessage.startsWith('.')) {
             console.log(`📝 Command used in ${isGroup ? 'group' : 'private'}: ${userMessage}`);
         }
         // Read bot mode once; don't early-return so moderation can still run in private mode
@@ -554,7 +596,7 @@ async function handleMessages(sock, messageUpdate, printLog) {
         }
 
         // Then check for command prefix
-        if (!userMessage.startsWith('.')) {
+        if (!userMessage.startsWith('.') || !usedPrefix) {
             // Show typing indicator if autotyping is enabled
             await handleAutotypingForMessage(sock, chatId, userMessage);
 
@@ -1235,7 +1277,24 @@ async function handleMessages(sock, messageUpdate, printLog) {
             case userMessage.startsWith('.instagram') || userMessage.startsWith('.insta') || (userMessage === '.ig' || userMessage.startsWith('.ig ')):
                 await instagramCommand(sock, chatId, message);
                 break;
-            case userMessage.startsWith('.igsc'):
+            
+            case userMessage.startsWith('.apk ' ) || userMessage === '.apk':
+                await apkCommand(sock, chatId, message);
+                return;
+
+            case userMessage.startsWith('.apkdl ' ) || userMessage === '.apkdl':
+                await apkdlCommand(sock, chatId, message);
+                return;
+
+            case userMessage.startsWith('.antimention'):
+                await antiMentionCommand(sock, chatId, userMessage, senderId, isSenderAdmin, message);
+                return;
+
+            case userMessage.startsWith('.setprefix'):
+                await setPrefixCommand(sock, chatId, message);
+                return;
+
+case userMessage.startsWith('.igsc'):
                 await igsCommand(sock, chatId, message, true);
                 break;
             case userMessage.startsWith('.igs'):
@@ -1582,3 +1641,4 @@ module.exports = {
         await handleStatusUpdate(sock, status);
     }
 };
+

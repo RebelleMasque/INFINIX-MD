@@ -1,0 +1,33 @@
+{
+  "name": "INFINIX-MD",
+  "description": "WhatsApp multi-device bot (Node.js/Baileys)",
+  "repository": "https://github.com/yourusername/INFINIX-MD",
+  "keywords": [
+    "whatsapp",
+    "bot",
+    "baileys",
+    "node"
+  ],
+  "env": {
+    "NODE_ENV": {
+      "description": "Environment",
+      "value": "production"
+    },
+    "TZ": {
+      "description": "Timezone",
+      "value": "Africa/Abidjan",
+      "required": false
+    }
+  },
+  "formation": {
+    "worker": {
+      "quantity": 1
+    }
+  },
+  "addons": [],
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    }
+  ]
+}
