@@ -2,8 +2,8 @@ const settings = {
   packname: '𝐈𝐍𝐅𝐈𝐍𝐈𝐗•𝐌𝐃',
   author: 'rebelle masque',
   botName: "𝐈𝐍𝐅𝐈𝐍𝐈𝐗•𝐌𝐃",
-  botOwner: 'rebelle masque', // Your name
-  ownerNumber: '2250140768791', //Set your number here without + symbol, just add country code & number without any space
+  botOwner: 'rebelle masque', // ton nom
+  ownerNumber: '2250140768791', //Saisissez votre numéro ici, sans le symbole +. Indiquez simplement l'indicatif du pays et le numéro, sans espace.
   giphyApiKey: 'qnl7ssQChTdPjsKta2Ax2LMaGXz303tq',
   commandMode: "public",
   maxStoreMessages: 20, 
@@ -16,7 +16,7 @@ const settings = {
 module.exports = settings;
 
 
-// Added prefix setting
+// ajouté vautre prefix setting
 module.exports.prefix = process.env.PREFIX || '.';
 
 // Anti-mention de masse (suppression auto)

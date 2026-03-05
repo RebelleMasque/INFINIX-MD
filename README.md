@@ -11,7 +11,7 @@ Il est conçu pour aider les admins à gérer efficacement leurs groupes WhatsAp
 
 <div align="center"> 
   <a href="https://youtube.com/@mr_unique_hacker"> 
-    <img src="https://github.com/rebelle-masque/𝐈𝐍𝐅𝐈𝐍𝐈𝐗•𝐌𝐃-MD/blob/main/assets/bot_image.jpg" alt="𝐈𝐍𝐅𝐈𝐍𝐈𝐗•𝐌𝐃" height="300"> 
+    <img src="https://github.com/RebelleMasque/INFINIX-MD/blob/main/assets/bot_image.jpg" alt="𝐈𝐍𝐅𝐈𝐍𝐈𝐗•𝐌𝐃" height="300"> 
   </a> 
 </div>
 
@@ -20,14 +20,6 @@ Il est conçu pour aider les admins à gérer efficacement leurs groupes WhatsAp
   <img src="https://img.shields.io/github/stars/RebelleMasque/INFINIX-MD?style=for-the-badge&label=Stars" alt="Stars"/>
   <img src="https://img.shields.io/github/forks/RebelleMasque/INFINIX-MD?style=for-the-badge&label=Forks" alt="Forks"/>
   <img src="https://img.shields.io/github/watchers/RebelleMasque/INFINIX-MD?style=for-the-badge&label=Watchers" alt="Watchers"/>
-</div>
-
----
-
-<div>
-  <a href="https://www.thordata.com/products/residential-proxies?ls=YouTube&lk=𝐈𝐍𝐅𝐈𝐍𝐈𝐗•𝐌𝐃" target="_blank">
-    <img src="assets/thor.png" alt="ThorData Proxies" width="100%" />
-  </a>
 </div>
 
 ---
@@ -50,8 +42,8 @@ Clique sur le bouton ci-dessous pour forker le dépôt **𝐈𝐍𝐅𝐈𝐍�
 Pour plus de personnalisation et un guide complet, clique ici :
 
 <div align="center">
-  <a href="https://youtu.be/-oz_u1iMgf8" target="_blank">
-    <img src="https://img.shields.io/badge/Tutoriel%20de%20déploiement-dc3545?style=for-the-badge&logo=youtube" alt="Lien YouTube"/>
+  <a href="https://render.com/" target="_blank">
+    <img src="https://img.shields.io/badge/render%20style=for-the-badge&logo=youtube" alt="Lien YouTube"/>
   </a>
   <a href="https://bot-hosting.net/?aff=1328388016930029589" target="_blank">
     <img src="https://img.shields.io/badge/Déployer%20sur%20Panel-28a745?style=for-the-badge" alt="Déployer sur Panel"/>
@@ -115,7 +107,7 @@ Le bot tourne sous **Node.js** et propose l’authentification via QR Code pour 
 1. **Cloner le dépôt :**
 
     ```bash
-    https://github.com/RebelleMasque/INFINIX-MD.git
+   git clone https://github.com/RebelleMasque/INFINIX-MD.git
     cd INFINIX-MD
     ```
 
@@ -151,14 +143,6 @@ Ce projet est sous licence [MIT License](https://opensource.org/licenses/MIT) �
 - [WhatsApp groupe](https://chat.whatsapp.com/F9NbADb7L7v9SALfdBa9zq?mode=gi_t)
 ---
 
-### Licence (rappel)
-Ce projet est sous licence MIT, mais tu dois :
-- Respecter les lois et réglementations en vigueur
-- Garder la licence originale et les crédits
-- Citer les auteurs originaux
-- Ne pas utiliser à des fins de spam ou malveillantes
-
----
 ## 📜 Copyright
 
 Copyright (c) 2026 rebelle masque. Tous droits réservés.

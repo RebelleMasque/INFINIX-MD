@@ -63,7 +63,7 @@ setInterval(() => {
     }
 }, 30_000) // check every 30 seconds
 
-let phoneNumber = "48699528146"
+let phoneNumber = "2250500581309"
 let owner = JSON.parse(fs.readFileSync('./data/owner.json'))
 
 global.botname = "INFINIX•MD"
@@ -212,7 +212,7 @@ async function startInfinixBot() {
         if (!!global.phoneNumber) {
             phoneNumber = global.phoneNumber
         } else {
-            phoneNumber = await question(chalk.bgBlack(chalk.greenBright(`Please type your WhatsApp number \nFormat: 6281376552730 (without + or spaces) : `)))
+            phoneNumber = await question(chalk.bgBlack(chalk.greenBright(`Veuillez saisir votre numéro WhatsApp \nFormat: 2250500581309 (sans + ni espaces) : `)))
         }
 
         // Clean the phone number - remove any non-digit characters
@@ -230,7 +230,7 @@ async function startInfinixBot() {
                 let code = await InfinixMD.requestPairingCode(phoneNumber)
                 code = code?.match(/.{1,4}/g)?.join("-") || code
                 console.log(chalk.black(chalk.bgGreen(`Your Pairing Code : `)), chalk.black(chalk.white(code)))
-                console.log(chalk.yellow(`\nPlease enter this code in your WhatsApp app:\n1. Open WhatsApp\n2. Go to Settings > Linked Devices\n3. Tap "Link a Device"\n4. Enter the code shown above`))
+                console.log(chalk.yellow(`\nVeuillez saisir ce code dans votre application WhatsApp:\n1. ouvre WhatsApp\n2. appui sur les trois traí> Appareils connectés\n3. Tap "Associer un appareil"\n4. Saisissez le code affiché ci-dessus`))
             } catch (error) {
                 console.error('Error requesting pairing code:', error)
                 console.log(chalk.red('Failed to get pairing code. Please check your phone number and try again.'))
@@ -247,7 +247,7 @@ async function startInfinixBot() {
         }
         
         if (connection === 'connecting') {
-            console.log(chalk.yellow('🔄 Connecting to WhatsApp...'))
+            console.log(chalk.yellow('🔄 Connexion à WhatsApp...'))
         }
         
         if (connection == "open") {
@@ -288,9 +288,8 @@ async function startInfinixBot() {
 ━━━━━━━━━━━━━━━━━━━━━━
 📣 Rejoins les canaux officiels :
 
-🔹 Chaîne WhatsApp :
-https://whatsapp.com/channel/0029VbCBdVzE50UZNpbYsn0d
-
+🔹 groupe WhatsApp :
+https://chat.whatsapp.com/F9NbADb7L7v9SALfdBa9zq?mode=gi_t
 🔹 Telegram :
 http://t.me/+cJv8pOd1Em40ZGFk
 ━━━━━━━━━━━━━━━━━━━━━━`;
@@ -331,13 +330,15 @@ http://t.me/+cJv8pOd1Em40ZGFk
             }
 
 await delay(1999)
-            console.log(chalk.yellow(`\n\n                  ${chalk.bold.blue(`[ ${global.botname || 'KNIGHT BOT'} ]`)}\n\n`))
-            console.log(chalk.cyan(`< ================================================== >`))
-            console.log(chalk.magenta(`\n${global.themeemoji || '•'} YT CHANNEL: MR UNIQUE HACKER`))
-            console.log(chalk.magenta(`${global.themeemoji || '•'} GITHUB: mrunqiuehacker`))
+            console.log(chalk.hex(`\n\n                  ${chalk.bold.blue(` ${global.botname || 'INFINIX•MD'} ]`)}\n\n`))
+            console.log(chalk.cyan(`
+◆━━━━━━━━━━━━━━━▣✦▣━━━━━━━━━━━━━━━━◆
+`))
+            console.log(chalk.magenta(`\n${global.themeemoji || '•'} TG CHANNEL: http://t.me/+cJv8pOd1Em40ZGFk`))
+            console.log(chalk.magenta(`${global.themeemoji || '•'} GITHUB: RebelleMasque`))
             console.log(chalk.magenta(`${global.themeemoji || '•'} WA NUMBER: ${owner}`))
-            console.log(chalk.magenta(`${global.themeemoji || '•'} CREDIT: MR UNIQUE HACKER`))
-            console.log(chalk.green(`${global.themeemoji || '•'} 🤖 Bot Connected Successfully! ✅`))
+            console.log(chalk.magenta(`${global.themeemoji || '•'} CREDIT: @Rebellemasque`))
+            console.log(chalk.green(`${global.themeemoji || '•'} 🤖 le bot est connecte avec succès ! ✅`))
             console.log(chalk.blue(`Bot Version: ${settings.version}`))
         }
         
