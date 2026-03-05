@@ -42,9 +42,9 @@ Clique sur le bouton ci-dessous pour forker le dépôt **𝐈𝐍𝐅𝐈𝐍�
 Pour plus de personnalisation et un guide complet, clique ici :
 
 <div align="center">
-  <a href="https://render.com/" target="_blank">
-    <img src="https://img.shields.io/badge/render%20style=for-the-badge&logo=youtube" alt="Lien YouTube"/>
-  </a>
+<a href="https://render.com/" target="_blank">
+<img src="https://img.shields.io/badge/Deploy%20on-Render-46E3B7?style=for-the-badge&logo=render&logoColor=white"/>
+</a>
   <a href="https://bot-hosting.net/?aff=1328388016930029589" target="_blank">
     <img src="https://img.shields.io/badge/Déployer%20sur%20Panel-28a745?style=for-the-badge" alt="Déployer sur Panel"/>
   </a>
