@@ -5,7 +5,7 @@ Il est conçu pour aider les admins à gérer efficacement leurs groupes WhatsAp
 
 <div align="center"> 
   <a href="https://git.io/typing-svg"> 
-    <img src="https://readme-typing-svg.demolab.com?font=Ribeye&size=50&pause=1000&color=#FFEA00&center=true&width=910&height=100&lines=INFINX-MD;Multi+Device+Whatsapp+Bot;Coded+By+rebelle+masque" alt="Typing SVG" />
+    <img src="https://readme-typing-svg.demolab.com?font=Ribeye&size=50&pause=1000&color=#FFD700&center=true&width=910&height=100&lines=INFINX-MD;Multi+Device+Whatsapp+Bot;Coded+By+rebelle+masque" alt="Typing SVG" />
   </a> 
 </div> 
 
