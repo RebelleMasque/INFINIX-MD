@@ -6,7 +6,7 @@ const path = require('path');
 
 async function githubCommand(sock, chatId, message) {
   try {
-    const res = await fetch('https://api.github.com//repos/RebelleMasque/INFINIX-MD');
+    const res = await fetch('https://api.github.com/repos/RebelleMasque/INFINIX-MD');
     if (!res.ok) throw new Error('Error fetching repository data');
     const json = await res.json();
 
