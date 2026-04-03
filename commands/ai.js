@@ -1,6 +1,19 @@
 const axios = require('axios');
 const { channelInfo } = require('../lib/messageConfig');
 
+// ===============================
+// CONFIG OPENROUTER
+// ===============================
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || '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';
+
+// IA gratuite via OpenRouter
+const FREE_ROUTER_MODEL = 'openrouter/free';
+
+const MODELS = {
+  gpt: FREE_ROUTER_MODEL,
+  gemini: FREE_ROUTER_MODEL,
+};
+
 // Récupère le texte brut (message normal / reply / caption)
 function getText(message) {
   return (
@@ -12,47 +25,80 @@ function getText(message) {
   );
 }
 
+// Récupère la réponse OpenRouter
 function pickAnswer(data) {
   if (!data) return null;
-  // formats fréquents
-  return (
-    data.answer ||
-    data.response ||
-    data.message ||
-    data.result ||
-    data.output ||
-    data.data?.answer ||
-    data.data?.response ||
-    data.data?.message ||
-    data.data?.result ||
-    null
-  );
-}
 
-async function tryGet(endpoint) {
-  const res = await axios.get(endpoint, {
-    timeout: 20000,
-    headers: {
-      'User-Agent':
-        'Mozilla/5.0 (Linux; Android 12) AppleWebKit/537.36 Chrome/120 Safari/537.36',
-      Accept: 'application/json,text/plain,*/*',
-    },
-    validateStatus: () => true,
-  });
+  const content = data?.choices?.[0]?.message?.content;
 
-  // Texte brut
-  if (typeof res.data === 'string') {
-    const s = res.data.trim();
-    return s.length > 2 ? s : null;
+  if (typeof content === 'string' && content.trim()) {
+    return content.trim();
   }
 
-  // JSON
-  if (res.data && typeof res.data === 'object') {
-    const ans = pickAnswer(res.data);
-    if (typeof ans === 'string' && ans.trim().length > 2) return ans.trim();
+  if (Array.isArray(content)) {
+    const text = content
+      .map((item) => {
+        if (typeof item === 'string') return item;
+        if (item?.text) return item.text;
+        return '';
+      })
+      .join('\n')
+      .trim();
+
+    if (text) return text;
   }
 
   return null;
+}
+
+// Appel OpenRouter
+async function askAI(prompt, model) {
+  if (!OPENROUTER_API_KEY || OPENROUTER_API_KEY === 'METS_TA_CLE_ICI') {
+    throw new Error('Clé OpenRouter manquante');
+  }
+
+  const res = await axios.post(
+    'https://openrouter.ai/api/v1/chat/completions',
+    {
+      model,
+      messages: [
+        {
+          role: 'system',
+          content:
+            "Tu es un assistant intelligent. Réponds toujours en français avec un style propre, clair et utile.",
+        },
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      temperature: 0.7,
+      max_tokens: 1200,
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      timeout: 45000,
+      validateStatus: () => true,
+    }
+  );
+
+  if (res.status < 200 || res.status >= 300) {
+    const err =
+      res.data?.error?.message ||
+      res.data?.message ||
+      `HTTP ${res.status}`;
+    throw new Error(err);
+  }
+
+  const answer = pickAnswer(res.data);
+  if (!answer) {
+    throw new Error('Réponse vide');
+  }
+
+  return answer;
 }
 
 async function aiCommand(sock, chatId, message) {
@@ -74,9 +120,10 @@ async function aiCommand(sock, chatId, message) {
       );
     }
 
-    // Réaction "en cours"
     try {
-      await sock.sendMessage(chatId, { react: { text: '⏳', key: message.key } });
+      await sock.sendMessage(chatId, {
+        react: { text: '⏳', key: message.key },
+      });
     } catch {}
 
     await sock.sendMessage(
@@ -85,58 +132,36 @@ async function aiCommand(sock, chatId, message) {
       { quoted: message }
     );
 
-    // Endpoints (fallback). On ne crée PAS de nouvelles commandes.
-    const endpoints = [];
-
-    // Priorité "gemini" si la commande est .gemini
-    if (cmd === '.gemini') {
-      endpoints.push(`https://apis-keith.vercel.app/ai/gemini?q=${encodeURIComponent(query)}`);
-    }
-
-    // Fallback générique
-    endpoints.push(
-      `https://apis-keith.vercel.app/ai/gpt?q=${encodeURIComponent(query)}`,
-      `https://api.giftedtechnexus.co.ke/api/ai/gpt?apikey=gifted&q=${encodeURIComponent(query)}`,
-      `https://vihangayt.me/tools/chatgpt?q=${encodeURIComponent(query)}`,
-      `https://api-rk.vercel.app/ai?q=${encodeURIComponent(query)}`,
-      `https://api.lolhuman.xyz/api/openai?apikey=gatau&q=${encodeURIComponent(query)}`
-    );
-
+    const model = cmd === '.gemini' ? MODELS.gemini : MODELS.gpt;
     let answer = null;
-    let lastErr = null;
 
-    for (const ep of endpoints) {
-      try {
-        const a = await tryGet(ep);
-        if (a) {
-          answer = a;
-          break;
-        }
-        lastErr = new Error('Réponse vide');
-      } catch (e) {
-        lastErr = e;
-      }
-    }
+    try {
+      answer = await askAI(query, model);
+    } catch (e) {
+      console.error('Erreur OpenRouter:', e?.response?.data || e.message);
 
-    if (!answer) {
       try {
-        await sock.sendMessage(chatId, { react: { text: '❌', key: message.key } });
+        await sock.sendMessage(chatId, {
+          react: { text: '❌', key: message.key },
+        });
       } catch {}
 
       return await sock.sendMessage(
         chatId,
         {
           text:
-            `❌ Impossible d'obtenir une réponse AI pour le moment.\n➡️ Réessaie dans 1 minute.` +
-            (lastErr?.message ? `\n📝 Détail: ${lastErr.message}` : ''),
+            `❌ Erreur OpenRouter.\n` +
+            `📝 Détail: ${e.message}\n\n` +
+            `✅ Vérifie la clé API et réessaie.`,
           ...channelInfo,
         },
         { quoted: message }
       );
     }
 
-    // Sécurité: éviter les messages trop longs
-    if (answer.length > 3500) answer = answer.slice(0, 3500) + '…';
+    if (answer.length > 3500) {
+      answer = answer.slice(0, 3500) + '…';
+    }
 
     const header = cmd === '.gemini' ? '✨ GEMINI' : '🤖 GPT';
     const question = query.length > 350 ? query.slice(0, 350) + '…' : query;
@@ -150,16 +175,26 @@ async function aiCommand(sock, chatId, message) {
       `✨ INFINIX•MD\n` +
       `> BY REBELLE MASQUE`;
 
-    await sock.sendMessage(chatId, { text: styled, ...channelInfo }, { quoted: message });
+    await sock.sendMessage(
+      chatId,
+      { text: styled, ...channelInfo },
+      { quoted: message }
+    );
 
     try {
-      await sock.sendMessage(chatId, { react: { text: '✅', key: message.key } });
+      await sock.sendMessage(chatId, {
+        react: { text: '✅', key: message.key },
+      });
     } catch {}
   } catch (error) {
     console.error('Error in AI command:', error);
+
     try {
-      await sock.sendMessage(chatId, { react: { text: '❌', key: message.key } });
+      await sock.sendMessage(chatId, {
+        react: { text: '❌', key: message.key },
+      });
     } catch {}
+
     await sock.sendMessage(
       chatId,
       { text: '❌ Erreur AI. Réessaie plus tard.', ...channelInfo },
